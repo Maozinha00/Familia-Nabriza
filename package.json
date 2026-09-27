@@ -1,13 +1,16 @@
 {
-  "name": "bot-familia-amigos",
+  "name": "familia-amigos-bot",
   "version": "1.0.0",
-  "description": "Bot para apagar tudo e recriar servidor Família & Amigos",
+  "description": "Bot Discord Família Nabriza & Amigos para Railway",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
   },
   "dependencies": {
-    "discord.js": "^14.18.0",
-    "dotenv": "^16.4.7"
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
