@@ -1,0 +1,34 @@
+{
+  "ultimoDiaEnviado": 4,
+  "proximaCarta": 5,
+  "ultimaDataEnvio": "2026-10-17",
+  "horaEnvio": 6,
+  "minutoEnvio": 0,
+  "fusoEnvio": "America/Sao_Paulo",
+  "historico": [
+    {
+      "dia": 1,
+      "data": "2026-10-14",
+      "horario": "06:00",
+      "status": "Enviada com sucesso"
+    },
+    {
+      "dia": 2,
+      "data": "2026-10-15",
+      "horario": "06:00",
+      "status": "Enviada com sucesso"
+    },
+    {
+      "dia": 3,
+      "data": "2026-10-16",
+      "horario": "06:00",
+      "status": "Enviada com sucesso"
+    },
+    {
+      "dia": 4,
+      "data": "2026-10-17",
+      "horario": "06:00",
+      "status": "Enviada com sucesso (Ontem)"
+    }
+  ]
+}
