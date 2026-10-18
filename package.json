@@ -1,10 +1,11 @@
 {
-  "name": "familia-amigos-bot",
+  "name": "bot-cartinhas-familia-souza",
   "version": "1.0.0",
-  "description": "Bot Discord Família Nabriza & Amigos para Railway",
+  "description": "Bot Discord Oficial - Cartinhas de Amor Henrique & Luísa",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node bot.js",
+    "build": "echo 'Build concluído com sucesso!' || true"
   },
   "dependencies": {
     "discord.js": "^14.16.3",
