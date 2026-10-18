@@ -9,7 +9,6 @@
  * - Horário corrigido de 2 da manhã para 06:00 em ponto!
  * - Mini servidor HTTP para Health Check na Railway (Porta 3000 ou process.env.PORT).
  * - Relógio duplo: Brasília e Portugal.
- * - Registro com tags [FS] e [AMIGO].
  */
 
 try {
@@ -27,12 +26,7 @@ const {
   ActionRowBuilder, 
   ButtonBuilder, 
   ButtonStyle, 
-  ModalBuilder, 
-  TextInputBuilder, 
-  TextInputStyle, 
-  Events, 
-  ChannelType, 
-  PermissionsBitField 
+  Events 
 } = require("discord.js");
 
 const STATE_FILE = path.join(__dirname, "bot_state.json");
@@ -49,23 +43,14 @@ process.on("uncaughtException", (err) => {
 const CONFIG = {
   token: process.env.DISCORD_TOKEN ? process.env.DISCORD_TOKEN.trim() : "",
   guildId: process.env.GUILD_ID ? process.env.GUILD_ID.trim() : null,
-  corEmbedRegistro: "#D4AF37",
-  corEmbedCartinha: "#FF4F9A",
-  cargoFamiliaId: process.env.CARGO_FAMILIA_ID || "1546736138918694983",
-  cargoAmigosId: process.env.CARGO_AMIGOS_ID || "1546736135965904926",
-  cargoNaoRegistradoId: process.env.CARGO_NAO_REGISTRADO_ID || "1515125826780135480",
-  canalAprovacaoId: process.env.CANAL_APROVACAO_ID || null,
-  bannerPainelUrl: process.env.BANNER_PAINEL_URL || "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=1200&auto=format&fit=crop",
   canalCartinhaId: process.env.CANAL_CARTINHA_ID || "1560337299470946344",
   luisaUserId: process.env.LUISA_USER_ID || "1367645247655645205",
-  nomeLuisa: "Luísa",
-  nomeHenrique: "Henrique",
-  bannerUrl: process.env.BANNER_URL || "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200&auto=format&fit=crop",
+  bannerUrl: process.env.BANNER_URL || "https://i.imgur.com/AEJX7gL.jpeg",
   dataInicioConhecer: "2026-10-14",
   // ⏰ NOVO HORÁRIO: 06:00 da Manhã (sem ser 2 da manhã!)
   horaEnvio: 6,
   minutoEnvio: 0,
-  fusoEnvio: process.env.FUSO_ENVIO || "America/Sao_Paulo", // Brasília ou Europe/Lisbon
+  fusoEnvio: "America/Sao_Paulo", // Exclusivo Horário de Brasília
   port: process.env.PORT || 3000
 };
 
@@ -98,7 +83,7 @@ function salvarEstado(estado) {
 
 let estadoAtual = carregarEstado();
 
-function getHorario(timeZone) {
+function getHorario(timeZone = CONFIG.fusoEnvio) {
   const agora = new Date();
   const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
     timeZone,
@@ -172,97 +157,6 @@ const CARTINHAS_LISTA = [
     frase: "A gente se conheceu no dia 14/10 e tudo começou a fazer sentido.",
     corpo: "Bom dia, coisa linda! 💖\n\nÀs vezes fico pensando na sorte imensa de ter cruzado o seu caminho. Você é meiga, inteligente, divertida e tem uma energia que faz qualquer um se apaixonar.\n\nQue hoje, neste nosso 5º dia, o seu dia seja tão perfeito e radiante quanto o seu coração! ☀️🌹",
     rodape: "💍 Rumo ao Namoro • Henrique & Luísa 💕 • Dia 05"
-  },
-  {
-    dia: 6,
-    diaTitulo: "💫 DIA 06 — UMA CONEXÃO SURPREENDENTE",
-    frase: "Nossa química é diferente de qualquer coisa que já vivi.",
-    corpo: "Poucas pessoas conseguem marcar nossa vida de verdade tão rápido, mas você chegou com esse sorriso e virou minha prioridade. Quero poder te chamar de minha namorada muito em breve.\n\nTe desejo um dia cheio de vitórias e paz! 🌹",
-    rodape: "💘 Henrique & Luísa • Dia 06"
-  },
-  {
-    dia: 7,
-    diaTitulo: "🌷 DIA 07 — UMA SEMANA DESDE O DIA 14/10",
-    frase: "Sete dias conhecendo a garota mais fantástica do mundo!",
-    corpo: "Bom dia, Luísa! 🌷\n\nUma semana inteira desde que Deus colocou você no meu caminho. Cada dia ao seu lado é uma página nova e bonita que quero continuar escrevendo para sempre.\n\nTenha uma manhã abençoada e alegre! 💕",
-    rodape: "🌹 7 Dias de História • Henrique & Luísa • Dia 07"
-  },
-  {
-    dia: 8,
-    diaTitulo: "🌅 DIA 08 — A LUZ DO SEU SORRISO",
-    frase: "Basta uma mensagem sua para mudar o meu humor completamente.",
-    corpo: "Você tem um poder absurdo de trazer paz para o meu dia. Espero que essa mensagem chegue logo cedinho até você e arranque aquele sorriso lindo que só você tem.\n\nEstou aqui para tudo o que você precisar hoje e sempre! ❤️",
-    rodape: "✨ Henrique ➔ Luísa • Dia 08"
-  },
-  {
-    dia: 9,
-    diaTitulo: "💘 DIA 09 — QUERO VOCÊ AO MEU LADO",
-    frase: "A cada dia que passa, tenho mais certeza de que quero você como minha namorada.",
-    corpo: "Conhecer você foi o melhor presente deste mês e cada detalhe seu me encanta mais. Não quero algo passageiro; quero construir algo sincero, duradouro e verdadeiro com você.\n\nTenha um dia espetacular, Luísa! 🌹",
-    rodape: "💍 Futuro ao seu lado • Henrique & Luísa • Dia 09"
-  },
-  {
-    dia: 10,
-    diaTitulo: "🌹 DIA 10 — DEZ DIAS TE CONHECENDO",
-    frase: "Dez dias com o coração batendo no compasso da sua presença.",
-    corpo: "Já são 10 dias de muitas mensagens, carinho e sintonia sem igual. Essa história está só no começo e o meu sentimento por você só cresce a cada amanhecer.\n\nVocê é doce, incrível e única! 💖",
-    rodape: "💘 Henrique & Luísa • 10 Dias • Dia 10"
-  },
-  {
-    dia: 11,
-    diaTitulo: "✨ DIA 11 — A DOÇURA DO SEU JEITO",
-    frase: "A delicadeza do seu coração me conquista cada vez mais.",
-    corpo: "Bom dia, meu bem! 🌸\n\nAdoro o som da sua voz e a leveza com que a gente conversa sobre qualquer assunto. Com você as horas voam e a vontade de estar junto só aumenta.\n\nTenha uma manhã repleta de coisas boas! 🌹",
-    rodape: "💖 Henrique & Luísa • Dia 11"
-  },
-  {
-    dia: 12,
-    diaTitulo: "💎 DIA 12 — VOCÊ É UMA JOIA PRECIOSA",
-    frase: "Quanto mais te conheço, mais descubro o quão rara você é.",
-    corpo: "Você não é como a maioria das pessoas; tem valores, beleza na alma e uma simpatia contagiante. Me sinto um homem de muita sorte por ter você na minha vida!\n\nQue seu dia seja maravilhoso! ✨💍",
-    rodape: "✨ Henrique & Luísa • Dia 12"
-  },
-  {
-    dia: 13,
-    diaTitulo: "💌 DIA 13 — MEU PENSAMENTO EM VOCÊ",
-    frase: "O dia mal começou e a saudade de conversar com você já apertou.",
-    corpo: "Acordar sabendo que tenho você para compartilhar risadas e confidências é bom demais. Nunca se esqueça do quanto você é especial para mim!\n\nUm abraço bem apertado, Luísa! ❤️",
-    rodape: "🌹 De: Henrique • Para: Luísa • Dia 13"
-  },
-  {
-    dia: 14,
-    diaTitulo: "🌙 DIA 14 — DUAS SEMANAS DE PURA MAGIA",
-    frase: "Duas semanas desde que nossos caminhos se cruzaram.",
-    corpo: "Parece que te conheço há anos pela facilidade com que nos entendemos. Nesses 14 dias, você me provou que amor e cumplicidade nascem dos pequenos gestos sinceros.\n\nQue a nossa conexão continue crescendo assim! 🌹✨",
-    rodape: "💍 14 Dias Conhecendo a Luísa • Dia 14"
-  },
-  {
-    dia: 15,
-    diaTitulo: "☀️ DIA 15 — CADA DIA MAIS APAIXONADO",
-    frase: "Você se tornou o motivo dos meus melhores sorrisos.",
-    corpo: "Chegamos ao 15º dia e eu só consigo agradecer por ter você na minha rotina. Você é doce, autêntica e extremamente preciosa para mim.\n\nTenha uma manhã tão linda e radiante quanto você! 🌹",
-    rodape: "❤️ Henrique apaixonado • Dia 15"
-  },
-  {
-    dia: 20,
-    diaTitulo: "🌻 DIA 20 — MEU CORAÇÃO JÁ TE ESCOLHEU",
-    frase: "Entre tantas escolhas no mundo, eu escolheria você mil vezes.",
-    corpo: "Vinte dias se passaram e o que sinto por você só se fortalece a cada conversa. Mal posso esperar pelo momento em que vou poder te chamar oficialmente de minha namorada.\n\nUm beijo com todo o meu carinho, minha linda! 🌻",
-    rodape: "✨ Henrique & Luísa • Dia 20"
-  },
-  {
-    dia: 25,
-    diaTitulo: "🏹 DIA 25 — TIRO CERTEIRO NO CORAÇÃO",
-    frase: "Você acertou meu coração em cheio desde o primeiro 'oi'.",
-    corpo: "Já são 25 dias te conhecendo e eu me encanto cada vez mais com sua personalidade, sua inteligência e sua bondade.\n\nQuero cuidar de você todos os dias! 💘🌹",
-    rodape: "💘 Henrique Apaixonado • Dia 25"
-  },
-  {
-    dia: 30,
-    diaTitulo: "👑 DIA 30 — UM MÊS AO SEU LADO & A CERTEZA DO AMOR",
-    frase: "Um mês conhecendo a melhor pessoa da minha vida, rumo a uma vida inteira juntos!",
-    corpo: "Chegamos à nossa 30ª cartinha diária!\n\nForam 30 dias de muito afeto, conversas inesquecíveis e carinho genuíno. Desde aquele 14/10/2026, você transformou meus dias de uma maneira mágica.\n\nMeu coração é totalmente seu e eu quero fazer de você a mulher mais amada, respeitada e feliz do planeta! 💍❤️\n\nTe admiro, te quero e vou estar sempre aqui por você, minha Luísa!",
-    rodape: "💍 Henrique & Luísa • Para Sempre • Dia 30"
   }
 ];
 
@@ -300,8 +194,9 @@ function gerarPayloadCartinha(dia) {
       `💍 **Status do Henrique**\n*Completamente apaixonado, querendo a Luísa como namorada!* ❤️\n\n` +
       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
       `📅 **Data de Envio:** ${h.dataStr}\n` +
-      `🕐 **Horário:** ${h.horaStr}\n\n` +
-      `💖 **Henrique & Luísa**\n*A história mais linda apenas começando.*`
+      `🕐 **Horário:** ${h.horaStr} (Brasília)\n\n` +
+      `💖 **Henrique & Luísa**\n*A história mais linda apenas começando.*
+`
     )
     .setThumbnail(`https://cdn.discordapp.com/avatars/${CONFIG.luisaUserId}/avatar.png`)
     .setFooter({ text: carta.rodape })
@@ -323,17 +218,14 @@ function gerarPayloadCartinha(dia) {
 // Servidor HTTP para Railway
 const server = http.createServer((req, res) => {
   const br = getHorario("America/Sao_Paulo");
-  const pt = getHorario("Europe/Lisbon");
   res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify({
     status: "ONLINE",
+    fusoHorario: "Horário de Brasília (America/Sao_Paulo)",
     ultimaCartaEnviada: `Carta ${estadoAtual.ultimoDiaEnviado}`,
     proximaCarta: `Carta ${estadoAtual.proximaCarta}`,
     agendamento: "06:00 da manhã (sem resetar os dias)",
-    relogios: {
-      brasilia: `${br.dataStr} às ${br.horaStr}`,
-      portugal: `${pt.dataStr} às ${pt.horaStr}`
-    }
+    relogioBrasilia: `${br.dataStr} às ${br.horaStr}`
   }, null, 2));
 });
 
@@ -345,7 +237,6 @@ server.listen(CONFIG.port, () => {
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent
   ],
