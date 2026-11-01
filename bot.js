@@ -1,14 +1,7 @@
 /**
- * ============================================================================
- * ⚜️ BOT DISCORD OFICIAL • FAMÍLIA SOUZA & CARTINHAS DE AMOR HENRIQUE & LUÍSA 💌
- * ============================================================================
- * 
- * 🚀 VERSÃO ATUALIZADA & CORRIGIDA (SEM RESETAR OS DIAS E DISPARO ÀS 06:00)
- * - Persistência em bot_state.json: nunca mais reseta ao reiniciar na Railway!
- * - Ontem foi Carta 4 -> Hoje às 06:00 dispara a Carta 5!
- * - Horário corrigido de 2 da manhã para 06:00 em ponto!
- * - Mini servidor HTTP para Health Check na Railway (Porta 3000 ou process.env.PORT).
- * - Relógio duplo: Brasília e Portugal.
+ * 💌 CARTINHAS DE AMOR • HENRIQUE & NALA
+ * Início do namoro: 01/11/2026
+ * Envio diário: 06:00 — Brasília
  */
 
 try {
@@ -18,219 +11,329 @@ try {
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-const { 
-  Client, 
-  GatewayIntentBits, 
-  Partials, 
-  EmbedBuilder, 
-  ActionRowBuilder, 
-  ButtonBuilder, 
-  ButtonStyle, 
-  Events 
+
+const {
+  Client,
+  GatewayIntentBits,
+  Partials,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  Events
 } = require("discord.js");
 
-const STATE_FILE = path.join(__dirname, "bot_state.json");
-
-// Anti-crash
-process.on("unhandledRejection", (reason) => {
-  console.error("🛡️ [ANTI-CRASH] Rejeição interceptada:", reason);
-});
-process.on("uncaughtException", (err) => {
-  console.error("🛡️ [ANTI-CRASH] Exceção:", err.message || err);
-});
+const STATE_FILE = path.join(
+  __dirname,
+  "bot_state_nala_2026-11-01.json"
+);
 
 // Configurações
 const CONFIG = {
-  token: process.env.DISCORD_TOKEN ? process.env.DISCORD_TOKEN.trim() : "",
-  guildId: process.env.GUILD_ID ? process.env.GUILD_ID.trim() : null,
-  canalCartinhaId: process.env.CANAL_CARTINHA_ID || "1560337299470946344",
-  luisaUserId: process.env.LUISA_USER_ID || "1367645247655645205",
-  bannerUrl: process.env.BANNER_URL || "https://i.imgur.com/AEJX7gL.jpeg",
-  dataInicioConhecer: "2026-10-14",
-  // ⏰ NOVO HORÁRIO: 06:00 da Manhã (sem ser 2 da manhã!)
+  token: (process.env.DISCORD_TOKEN || "").trim(),
+  guildId: (process.env.GUILD_ID || "").trim(),
+  canalCartinhaId:
+    process.env.CANAL_CARTINHA_ID || "1560337299470946344",
+  nalaUserId:
+    process.env.NALA_USER_ID || "1536514317841866873",
+  bannerUrl:
+    process.env.BANNER_URL || "https://i.imgur.com/AEJX7gL.jpeg",
+  dataInicioNamoro: "2026-11-01",
   horaEnvio: 6,
   minutoEnvio: 0,
-  fusoEnvio: "America/Sao_Paulo", // Exclusivo Horário de Brasília
+  fusoEnvio: "America/Sao_Paulo",
   port: process.env.PORT || 3000
 };
 
-// Gerenciamento de Estado Persistente
-function carregarEstado() {
-  const padrao = {
-    ultimoDiaEnviado: 4,
-    proximaCarta: 5,
-    ultimaDataEnvio: "2026-10-17",
-    historico: []
-  };
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      return { ...padrao, ...JSON.parse(fs.readFileSync(STATE_FILE, "utf-8")) };
-    }
-  } catch (e) {
-    console.error("Erro ao ler estado:", e.message);
-  }
-  salvarEstado(padrao);
-  return padrao;
-}
+process.on("unhandledRejection", (reason) => {
+  console.error("🛡️ Rejeição não tratada:", reason);
+});
 
+process.on("uncaughtException", (err) => {
+  console.error("🛡️ Exceção:", err);
+});
+
+// Estado das cartinhas
 function salvarEstado(estado) {
   try {
-    fs.writeFileSync(STATE_FILE, JSON.stringify(estado, null, 2), "utf-8");
-  } catch (e) {
-    console.error("Erro ao salvar estado:", e.message);
+    fs.writeFileSync(
+      STATE_FILE,
+      JSON.stringify(estado, null, 2),
+      "utf-8"
+    );
+  } catch (err) {
+    console.error("Erro ao salvar estado:", err.message);
   }
+}
+
+function carregarEstado() {
+  const padrao = {
+    ultimoDiaEnviado: 0,
+    proximaCarta: 1,
+    ultimaDataEnvio: null,
+    historico: []
+  };
+
+  try {
+    if (fs.existsSync(STATE_FILE)) {
+      return {
+        ...padrao,
+        ...JSON.parse(fs.readFileSync(STATE_FILE, "utf-8"))
+      };
+    }
+  } catch (err) {
+    console.error("Erro ao ler estado:", err.message);
+  }
+
+  salvarEstado(padrao);
+  return padrao;
 }
 
 let estadoAtual = carregarEstado();
 
 function getHorario(timeZone = CONFIG.fusoEnvio) {
   const agora = new Date();
-  const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
+
+  const partes = new Intl.DateTimeFormat("pt-BR", {
     timeZone,
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-    hour12: false
-  });
-  const parts = timeFormatter.formatToParts(agora);
-  let hora = 0, minuto = 0, segundo = 0;
-  for (const p of parts) {
-    if (p.type === "hour") hora = parseInt(p.value, 10);
-    if (p.type === "minute") minuto = parseInt(p.value, 10);
-    if (p.type === "second") segundo = parseInt(p.value, 10);
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(agora);
+
+  const valores = {};
+
+  for (const parte of partes) {
+    if (parte.type !== "literal") {
+      valores[parte.type] = parte.value;
+    }
   }
-  const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  });
-  const isoFormatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  });
+
   return {
-    hora,
-    minuto,
-    segundo,
-    horaStr: `${String(hora).padStart(2, "0")}:${String(minuto).padStart(2, "0")}`,
-    dataStr: dateFormatter.format(agora),
-    dataIso: isoFormatter.format(agora)
+    hora: Number(valores.hour),
+    minuto: Number(valores.minute),
+    segundo: Number(valores.second),
+    horaStr: `${valores.hour}:${valores.minute}`,
+    dataStr: `${valores.day}/${valores.month}/${valores.year}`,
+    dataIso: `${valores.year}-${valores.month}-${valores.day}`
   };
 }
 
-// 💌 30 Cartinhas de Amor Completas
+function getDiaNamoro() {
+  const hoje = getHorario().dataIso;
+
+  const inicio = Date.parse(
+    `${CONFIG.dataInicioNamoro}T00:00:00Z`
+  );
+
+  const atual = Date.parse(`${hoje}T00:00:00Z`);
+
+  // 01/11 é o Dia 01 do namoro.
+  return Math.floor((atual - inicio) / 86400000) + 1;
+}
+
+// Cartinhas dos primeiros dias
 const CARTINHAS_LISTA = [
   {
     dia: 1,
-    diaTitulo: "✨ DIA 01 — O DIA EM QUE VOCÊ ENTROU NA MINHA VIDA",
-    frase: "No dia 14/10/2026 eu conheci a garota mais especial desse mundo.",
-    corpo: "Bom dia, Luísa! 🌸\n\nDesde o primeiro momento em que começamos a conversar, eu percebi algo totalmente diferente em você. Seu jeito me chamou a atenção e você se tornou a melhor pessoa que já conheci.\n\nQue o seu dia seja iluminado, leve e cheio de paz. Estou muito feliz por ter te conhecido! 🌹✨",
-    rodape: "🌹 Henrique & Luísa • 14/10/2026 • Dia 01"
+    diaTitulo: "✨ DIA 01 — O COMEÇO DO NOSSO NAMORO",
+    frase:
+      "No dia 01/11/2026 começou a nossa história juntos, Nala.",
+    corpo:
+      "Bom dia, Nala! 🌸\n\n" +
+      "Hoje começa uma nova página da nossa história, e eu " +
+      "estou muito feliz por ter você ao meu lado. Quero " +
+      "construir com você um namoro cheio de carinho, " +
+      "respeito, companheirismo e momentos especiais.\n\n" +
+      "Que este seja o primeiro de muitos bons dias que " +
+      "vamos compartilhar. Estou feliz por estarmos " +
+      "juntos, meu amor! ❤️🌹",
+    rodape: "🌹 Henrique & Nala • 01/11/2026 • Dia 01"
   },
   {
     dia: 2,
-    diaTitulo: "🌸 DIA 02 — CADA CONVERSA, UMA CERTEZA",
-    frase: "Você tem um brilho único que alegra qualquer dia cinzento.",
-    corpo: "Acordar e lembrar de você já faz a minha manhã ser muito melhor. Cada risada compartilhada e cada conversa me mostram o quanto você é incrível por dentro e por fora.\n\nTenha um dia lindo, minha princesa! ❤️",
-    rodape: "💖 Henrique ➔ Luísa • Dia 02"
+    diaTitulo: "🌸 DIA 02 — FELIZ POR TER VOCÊ",
+    frase:
+      "Você tem um brilho único que deixa meus dias mais bonitos.",
+    corpo:
+      "Bom dia, minha princesa! 💖\n\n" +
+      "Acordar e lembrar que estamos juntos já deixa " +
+      "minha manhã mais leve. Quero aproveitar cada " +
+      "conversa, cada risada e cada momento com você.\n\n" +
+      "Que seu dia seja tranquilo e cheio de coisas boas. " +
+      "Receba meu carinho, Nala! 🌸❤️",
+    rodape: "💖 Henrique & Nala • Dia 02"
   },
   {
     dia: 3,
-    diaTitulo: "💖 DIA 03 — VOCÊ NÃO SAI DO MEU PENSAMENTO",
-    frase: "Antes mesmo de começar o dia, meu primeiro pensamento bom foi você.",
-    corpo: "Bom dia, Luísa! 💖\n\nEu não consigo disfarçar o quanto você mexeu comigo. Você chegou de repente e já virou a dona dos meus melhores sorrisos. Meu coração sabe exatamente o que quer: você!\n\nTorcendo muito pelas suas conquistas hoje! 🌹",
-    rodape: "✨ Conhecendo o Meu Amor • Dia 03"
+    diaTitulo: "💖 DIA 03 — MEU PRIMEIRO PENSAMENTO",
+    frase:
+      "Antes mesmo de começar o dia, meu primeiro pensamento bom foi você.",
+    corpo:
+      "Bom dia, Nala! 💖\n\n" +
+      "Você chegou e trouxe novos motivos para eu sorrir. " +
+      "É muito bom saber que agora podemos viver essa " +
+      "história juntos, um dia de cada vez.\n\n" +
+      "Estou torcendo pelas suas conquistas e quero " +
+      "estar por perto nos dias bons e nos difíceis " +
+      "também. Tenha uma manhã linda! 🌹",
+    rodape: "✨ Ao lado do meu amor • Henrique & Nala • Dia 03"
   },
   {
     dia: 4,
-    diaTitulo: "🌹 DIA 04 — MEU CUIDADO & CARINHO",
-    frase: "Meu maior desejo diário é ver você sorrindo e bem com a vida.",
-    corpo: "Você merece ser tratada como a joia rara que é. Quero estar sempre por perto para cuidar de você, te ouvir e te fazer sentir a mulher mais especial deste mundo.\n\nUm abraço quentinho para o seu dia! 🌹✨",
-    rodape: "❤️ De: Henrique • Para: Luísa • Dia 04"
+    diaTitulo: "🌹 DIA 04 — MEU CUIDADO E CARINHO",
+    frase:
+      "Meu desejo é que você se sinta querida e respeitada ao meu lado.",
+    corpo:
+      "Bom dia, meu amor! 🌹\n\n" +
+      "Quero te ouvir, conhecer cada vez mais seu jeito " +
+      "e cuidar do que estamos construindo. Que nosso " +
+      "namoro tenha espaço para carinho, conversa " +
+      "e muitos momentos felizes.\n\n" +
+      "Um abraço apertado para começar seu dia, Nala! ❤️",
+    rodape: "❤️ De Henrique para Nala • Dia 04"
   },
   {
     dia: 5,
-    diaTitulo: "☀️ DIA 05 — O DESTINO CERTO & MEU BOM DIA ESPECIAL",
-    frase: "A gente se conheceu no dia 14/10 e tudo começou a fazer sentido.",
-    corpo: "Bom dia, coisa linda! 💖\n\nÀs vezes fico pensando na sorte imensa de ter cruzado o seu caminho. Você é meiga, inteligente, divertida e tem uma energia que faz qualquer um se apaixonar.\n\nQue hoje, neste nosso 5º dia, o seu dia seja tão perfeito e radiante quanto o seu coração! ☀️🌹",
-    rodape: "💍 Rumo ao Namoro • Henrique & Luísa 💕 • Dia 05"
+    diaTitulo: "☀️ DIA 05 — NOSSA HISTÓRIA CONTINUA",
+    frase:
+      "Estamos juntos desde 01/11 e quero construir uma história linda com você.",
+    corpo:
+      "Bom dia, coisa linda! 💖\n\n" +
+      "Chegamos ao nosso quinto dia de namoro, e eu " +
+      "quero continuar descobrindo tudo que faz você " +
+      "ser tão especial. Suas conversas e seu jeito " +
+      "já fazem parte dos meus melhores momentos.\n\n" +
+      "Que hoje não faltem motivos para sorrir. " +
+      "Você tem meu carinho, minha princesa! ☀️🌹",
+    rodape: "💍 Nosso namoro • Henrique & Nala • Dia 05"
   }
 ];
 
 function getCartaPorDia(dia) {
-  const achada = CARTINHAS_LISTA.find((c) => c.dia === dia);
-  if (achada) return achada;
+  const carta = CARTINHAS_LISTA.find(
+    (item) => item.dia === dia
+  );
+
+  if (carta) return carta;
+
   return {
     dia,
-    diaTitulo: `✨ DIA ${String(dia).padStart(2, '0')} — CONEXÃO & CARINHO DIÁRIO`,
-    frase: `São ${dia} dias conhecendo a Luísa, a mulher mais fantástica!`,
-    corpo: `Bom dia, minha princesa! 💖\n\nHoje completamos ${dia} dias desde que começamos a nos conhecer no dia 14/10/2026. A cada dia que passa, meu carinho e admiração por você só crescem.\n\nTenha um dia maravilhoso, Luísa! 🌹`,
-    rodape: `💍 Henrique & Luísa • Dia ${dia}`
+    diaTitulo:
+      `✨ DIA ${String(dia).padStart(2, "0")} — MAIS UM DIA JUNTOS`,
+    frase:
+      `Nala, é bom viver mais um dia dessa história com você!`,
+    corpo:
+      "Bom dia, minha princesa! 💖\n\n" +
+      `Hoje é o dia ${dia} do nosso namoro, que começou ` +
+      "em 01/11/2026. Quero continuar construindo com " +
+      "você uma relação de carinho, respeito e parceria.\n\n" +
+      "Que seu dia seja leve e cheio de boas notícias. " +
+      "Estou aqui torcendo por você, Nala! 🌹❤️",
+    rodape: `💍 Henrique & Nala • Dia ${dia}`
   };
 }
 
 function gerarPayloadCartinha(dia) {
   const carta = getCartaPorDia(dia);
-  const tz = CONFIG.fusoEnvio;
-  const h = getHorario(tz);
+  const horario = getHorario();
 
   const embed = new EmbedBuilder()
-    .setColor(0xFF4F9A)
+    .setColor(0xff4f9a)
     .setImage(CONFIG.bannerUrl)
-    .setAuthor({ name: "💌 CARTINHAS DE AMOR • HENRIQUE & LUÍSA" })
+    .setAuthor({
+      name: "💌 CARTINHAS DE AMOR • HENRIQUE & NALA"
+    })
     .setTitle(carta.diaTitulo)
     .setDescription(
-      `# 💖 Bom dia, minha princesa!\n\n` +
-      `<@${CONFIG.luisaUserId}>\n\n` +
+      "# 💖 Bom dia, minha princesa!\n\n" +
+      `<@${CONFIG.nalaUserId}>\n\n` +
       `> 💌 **${carta.frase}**\n\n` +
       `${carta.corpo}\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `## 🌹 Nossa História Começou\n\n` +
-      `✨ **Nos conhecemos no dia**\n\`14/10/2026\`\n\n` +
-      `⏳ **Estamos nos conhecendo há**\n**${dia} dias** de pura conexão e carinho!\n\n` +
-      `💍 **Status do Henrique**\n*Completamente apaixonado, querendo a Luísa como namorada!* ❤️\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `📅 **Data de Envio:** ${h.dataStr}\n` +
-      `🕐 **Horário:** ${h.horaStr} (Brasília)\n\n` +
-      `💖 **Henrique & Luísa**\n*A história mais linda apenas começando.*
-`
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n" +
+      "## 🌹 Nossa história\n\n" +
+      "✨ **Estamos juntos desde**\n" +
+      "`01/11/2026`\n\n" +
+      "⏳ **Nosso dia de namoro**\n" +
+      `**Dia ${dia}** de carinho e companheirismo!\n\n` +
+      "💍 **Status do Henrique**\n" +
+      "*Namorando a Nala desde 01/11/2026!* ❤️\n\n" +
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n" +
+      `📅 **Data de envio:** ${horario.dataStr}\n` +
+      `🕐 **Horário:** ${horario.horaStr} (Brasília)\n\n` +
+      "💖 **Henrique & Nala**\n" +
+      "*Nossa história sendo escrita um dia de cada vez.*"
     )
-    .setThumbnail(`https://cdn.discordapp.com/avatars/${CONFIG.luisaUserId}/avatar.png`)
     .setFooter({ text: carta.rodape })
     .setTimestamp();
 
   const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("btn_cartinha_conhecendo").setLabel("🌹 Melhor pessoa que conheci!").setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId("btn_cartinha_amor").setLabel("💖 Quero você como namorada!").setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId("btn_cartinha_marco").setLabel("✨ Conheci em 14/10/2026").setStyle(ButtonStyle.Primary)
+    new ButtonBuilder()
+      .setCustomId("btn_cartinha_conhecendo")
+      .setLabel("🌹 Você é especial!")
+      .setStyle(ButtonStyle.Danger),
+
+    new ButtonBuilder()
+      .setCustomId("btn_cartinha_amor")
+      .setLabel("💖 Feliz por namorar você!")
+      .setStyle(ButtonStyle.Success),
+
+    new ButtonBuilder()
+      .setCustomId("btn_cartinha_marco")
+      .setLabel("✨ Juntos desde 01/11/2026")
+      .setStyle(ButtonStyle.Primary)
   );
 
   return {
-    content: `╭━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╮\n        💌 **UMA CARTINHA PARA VOCÊ** 💌\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n<@${CONFIG.luisaUserId}> ❤️`,
+    content:
+      "╭━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╮\n" +
+      "        💌 **UMA CARTINHA PARA VOCÊ** 💌\n" +
+      "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n" +
+      `<@${CONFIG.nalaUserId}> ❤️`,
     embeds: [embed],
-    components: [row]
+    components: [row],
+    allowedMentions: {
+      parse: [],
+      users: [CONFIG.nalaUserId]
+    }
   };
 }
 
-// Servidor HTTP para Railway
+// Servidor HTTP
 const server = http.createServer((req, res) => {
-  const br = getHorario("America/Sao_Paulo");
-  res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-  res.end(JSON.stringify({
-    status: "ONLINE",
-    fusoHorario: "Horário de Brasília (America/Sao_Paulo)",
-    ultimaCartaEnviada: `Carta ${estadoAtual.ultimoDiaEnviado}`,
-    proximaCarta: `Carta ${estadoAtual.proximaCarta}`,
-    agendamento: "06:00 da manhã (sem resetar os dias)",
-    relogioBrasilia: `${br.dataStr} às ${br.horaStr}`
-  }, null, 2));
+  const horario = getHorario();
+
+  res.writeHead(200, {
+    "Content-Type": "application/json; charset=utf-8"
+  });
+
+  res.end(
+    JSON.stringify(
+      {
+        status: "ONLINE",
+        casal: "Henrique & Nala",
+        inicioNamoro: "01/11/2026",
+        diaNamoro: getDiaNamoro(),
+        ultimaCartaEnviada: estadoAtual.ultimoDiaEnviado,
+        proximaCarta: estadoAtual.proximaCarta,
+        agendamento: "06:00 — Brasília",
+        relogioBrasilia:
+          `${horario.dataStr} às ${horario.horaStr}`
+      },
+      null,
+      2
+    )
+  );
 });
 
 server.listen(CONFIG.port, () => {
-  console.log(`🌐 [HTTP] Servidor escutando na porta ${CONFIG.port}`);
+  console.log(
+    `🌐 Servidor HTTP escutando na porta ${CONFIG.port}`
+  );
 });
 
 // Cliente Discord
@@ -240,55 +343,136 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent
   ],
-  partials: [Partials.Channel, Partials.GuildMember, Partials.User]
+  partials: [
+    Partials.Channel,
+    Partials.GuildMember,
+    Partials.User
+  ]
 });
 
-async function dispararEnvioCarta(customDia) {
-  const dia = customDia || estadoAtual.proximaCarta;
-  const guild = client.guilds.cache.first();
-  if (!guild) return false;
+let envioEmAndamento = false;
 
-  let canal = guild.channels.cache.get(CONFIG.canalCartinhaId) ||
-    guild.channels.cache.find((c) => c.isTextBased() && (c.name.includes("cartinha") || c.name.includes("amor")));
+async function dispararEnvioCarta() {
+  if (envioEmAndamento) return false;
 
-  if (!canal) return false;
+  envioEmAndamento = true;
 
-  const payload = gerarPayloadCartinha(dia);
-  await canal.send(payload);
+  try {
+    const horario = getHorario();
+    const dia = getDiaNamoro();
 
-  const h = getHorario(CONFIG.fusoEnvio);
-  estadoAtual.ultimoDiaEnviado = dia;
-  estadoAtual.proximaCarta = dia + 1;
-  estadoAtual.ultimaDataEnvio = h.dataIso;
-  salvarEstado(estadoAtual);
+    if (dia < 1) return false;
 
-  console.log(`✅ [DISPARO SUCESSO] Carta ${dia} enviada para Luísa às ${h.horaStr} (${h.dataStr})! Próxima será Carta ${estadoAtual.proximaCarta}!`);
-  return true;
+    if (estadoAtual.ultimaDataEnvio === horario.dataIso) {
+      return false;
+    }
+
+    const canal = await client.channels.fetch(
+      CONFIG.canalCartinhaId
+    );
+
+    if (
+      !canal ||
+      !canal.isTextBased() ||
+      typeof canal.send !== "function"
+    ) {
+      console.error(
+        "❌ Canal de cartinhas não encontrado ou incompatível."
+      );
+      return false;
+    }
+
+    if (
+      CONFIG.guildId &&
+      canal.guildId !== CONFIG.guildId
+    ) {
+      console.error(
+        "❌ O canal não pertence ao servidor configurado."
+      );
+      return false;
+    }
+
+    await canal.send(gerarPayloadCartinha(dia));
+
+    estadoAtual.ultimoDiaEnviado = dia;
+    estadoAtual.proximaCarta = dia + 1;
+    estadoAtual.ultimaDataEnvio = horario.dataIso;
+
+    salvarEstado(estadoAtual);
+
+    console.log(
+      `✅ Carta do dia ${dia} enviada para Nala ` +
+      `às ${horario.horaStr} de ${horario.dataStr}.`
+    );
+
+    return true;
+  } finally {
+    envioEmAndamento = false;
+  }
 }
 
-client.once(Events.ClientReady, (c) => {
-  console.log("====================================================");
-  console.log(`🟢 [BOT ONLINE] ${c.user.tag}`);
-  console.log(`⏰ HORÁRIO PROGRAMADO: 06:00 (Fuso: ${CONFIG.fusoEnvio})`);
-  console.log(`💌 ÚLTIMA ENVIADA: Carta ${estadoAtual.ultimoDiaEnviado}`);
-  console.log(`💌 PRÓXIMA CARTA: Carta ${estadoAtual.proximaCarta}`);
-  console.log("====================================================");
+client.once(Events.ClientReady, (bot) => {
+  console.log(`🟢 Bot conectado: ${bot.user.tag}`);
+  console.log("💖 Henrique & Nala • 01/11/2026");
+  console.log("⏰ Envio diário: 06:00 — Brasília");
+  console.log(`📅 Dia do namoro: ${getDiaNamoro()}`);
 });
 
-// Agendador: checa a cada 20 segundos
+// Respostas dos botões
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  const respostas = {
+    btn_cartinha_conhecendo:
+      "🌹 Nala, você é muito especial para mim! — Henrique",
+    btn_cartinha_amor:
+      "💖 Estou feliz por estarmos juntos, minha princesa! — Henrique",
+    btn_cartinha_marco:
+      `💍 Henrique & Nala: juntos desde 01/11/2026. ` +
+      `Hoje é o dia ${getDiaNamoro()} do nosso namoro!`
+  };
+
+  const resposta = respostas[interaction.customId];
+  if (!resposta) return;
+
+  try {
+    await interaction.reply({
+      content: resposta,
+      flags: 64
+    });
+  } catch (err) {
+    console.error(
+      "Erro ao responder botão:",
+      err.message
+    );
+  }
+});
+
+// Verifica o horário a cada 20 segundos.
 setInterval(async () => {
   try {
     if (!client.isReady()) return;
-    const h = getHorario(CONFIG.fusoEnvio);
-    if (h.hora === CONFIG.horaEnvio && h.minuto === CONFIG.minutoEnvio && estadoAtual.ultimaDataEnvio !== h.dataIso) {
-      console.log(`⏰ [HORA EXATA 06:00] Enviando Carta ${estadoAtual.proximaCarta}...`);
+
+    const horario = getHorario();
+
+    if (
+      horario.hora === CONFIG.horaEnvio &&
+      horario.minuto === CONFIG.minutoEnvio &&
+      estadoAtual.ultimaDataEnvio !== horario.dataIso
+    ) {
       await dispararEnvioCarta();
     }
-  } catch (e) {
-    console.error("Erro no loop:", e);
+  } catch (err) {
+    console.error("Erro ao enviar cartinha:", err);
   }
 }, 20 * 1000);
 
-if (CONFIG.token && CONFIG.token.length > 25) {
-  client.login(CONFIG.token).catch(console.error);
+if (CONFIG.token) {
+  client.login(CONFIG.token).catch((err) => {
+    console.error("❌ Erro ao conectar ao Discord:", err.message);
+  });
+} else {
+  console.log(
+    "⚠️ Configure DISCORD_TOKEN no .env ou nas variáveis da hospedagem."
+  );
 }
